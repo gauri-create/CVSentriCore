@@ -3,10 +3,11 @@ import Login from './pages/Login';
 import HomeDashboard from './pages/HomeDashboard';
 import RegisterForm from './pages/RegisterForm';
 import SecurityWindow from './pages/SecurityWindow';
-// frontend\src\pages\HomeDashBoard.jsx
+import LandingPage from './pages/LandingPage';
+
 export default function App() {
     const [user, setUser] = useState(null);
-    const [currentView, setCurrentView] = useState('dashboard');
+    const [currentView, setCurrentView] = useState('landing'); 
 
     const handleLoginSuccess = (data) => {
         setUser(data);
@@ -18,15 +19,21 @@ export default function App() {
     const handleLogout = () => {
         setUser(null);
         localStorage.clear();
-        setCurrentView('dashboard');
+        setCurrentView('landing');
     };
 
-    // 1. If not logged in, render Login page
     if (!user) {
-        return <Login onLoginSuccess={handleLoginSuccess} />;
+        if (currentView === 'login') {
+            return (
+                <Login 
+                    onLoginSuccess={handleLoginSuccess} 
+                    onBackToLanding={() => setCurrentView('landing')} 
+                />
+            );
+        }
+        return <LandingPage onGoToLogin={() => setCurrentView('login')} />;
     }
 
-    // 2. If logged in, show the Dashboard window selection hub
     if (currentView === 'dashboard') {
         return (
             <HomeDashboard 
@@ -37,13 +44,12 @@ export default function App() {
         );
     }
 
-    // 3. Registration Window view
     if (currentView === 'register') {
         return (
-            <div>
+            <div style={{ backgroundColor: '#0a192f', minHeight: '100vh', paddingBottom: '30px' }}>
                 <button 
                     onClick={() => setCurrentView('dashboard')} 
-                    style={{ margin: '20px', padding: '8px 16px', cursor: 'pointer' }}
+                    style={{ margin: '20px 0 0 20px', padding: '8px 16px', cursor: 'pointer', backgroundColor: '#112240', color: '#00d2ff', border: '1px solid #00d2ff', borderRadius: '4px', fontWeight: 'bold' }}
                 >
                     ⬅ Back to Dashboard
                 </button>
@@ -52,10 +58,7 @@ export default function App() {
         );
     }
 
-    // 4. Security Window view
-   // 4. Security Window view
     if (currentView === 'security') {
         return <SecurityWindow onBack={() => setCurrentView('dashboard')} />;
-    
     }
 }
