@@ -1,0 +1,95 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  db:
+    image: mysql:8.0
+    container_name: cvsentricore-db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${DB_NAME:-cvsentricore}
+      MYSQL_USER: ${DB_USERNAME:-cvsentricore_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-cvsentricore_pass}
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+    networks:
+      - cvsentricore-network
+
+  # Spring Boot Backend
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: cvsentricore-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/${DB_NAME:-cvsentricore}
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME:-cvsentricore_user}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-cvsentricore_pass}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production}
+      SERVER_PORT: 8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      timeout: 10s
+      retries: 5
+      interval: 10s
+    networks:
+      - cvsentricore-network
+
+  # Python AI Service
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: cvsentricore-ai
+    environment:
+      FLASK_ENV: ${FLASK_ENV:-production}
+      BACKEND_URL: http://backend:8080
+      FLASK_PORT: 5001
+    ports:
+      - "5001:5001"
+    depends_on:
+      backend:
+        condition: service_healthy
+    volumes:
+      - ./ai-service/employee_images:/app/employee_images
+    networks:
+      - cvsentricore-network
+
+  # Nginx Reverse Proxy & Frontend
+  nginx:
+    image: nginx:alpine
+    container_name: cvsentricore-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./frontend/dist:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - backend
+      - ai-service
+    networks:
+      - cvsentricore-network
+
+volumes:
+  db_data:
+
+networks:
+  cvsentricore-network:
+    driver: bridge
