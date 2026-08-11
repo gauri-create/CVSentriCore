@@ -1,10 +1,10 @@
-FROM python:3.11-slim
+FROM python:3.11
 
 WORKDIR /app
 
 # Install system dependencies for OpenCV and face_recognition
 # These are required for dlib/face-recognition compilation
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     build-essential \
     cmake \
     git \
@@ -19,7 +19,9 @@ RUN apt-get update && apt-get install -y \
     libxext6 \
     libxrender-dev \
     libgtk-3-dev \
-    && rm -rf /var/lib/apt/lists/*
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
 
 # Upgrade pip and setuptools to latest versions
 RUN pip install --upgrade pip setuptools wheel
