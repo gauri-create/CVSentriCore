@@ -60,6 +60,14 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- PostgreSQL Driver (For free tier deployment on Render) -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.7.1</version>
+            <scope>runtime</scope>
+        </dependency>
+
         <!-- JJWT Libraries for Token-Based Authentication -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
