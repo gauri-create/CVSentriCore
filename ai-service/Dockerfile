@@ -11,6 +11,8 @@ RUN apt-get update && apt-get install -y \
     python3-dev \
     libopenblas-dev \
     liblapack-dev \
+    libatlas-base-dev \
+    gfortran \
     libx11-dev \
     libx11-6 \
     libsm6 \
@@ -19,8 +21,14 @@ RUN apt-get update && apt-get install -y \
     libgtk-3-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# Upgrade pip and setuptools to latest versions
+RUN pip install --upgrade pip setuptools wheel
+
 # Copy requirements
 COPY requirements.txt .
+
+# Pre-install numpy separately (helps with dlib compilation)
+RUN pip install --no-cache-dir numpy==1.26.0
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
