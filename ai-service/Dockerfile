@@ -2,37 +2,27 @@ FROM python:3.11
 
 WORKDIR /app
 
-# Install system dependencies for OpenCV and face_recognition
-# These are required for dlib/face-recognition compilation
-RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
+# Install minimal system dependencies for face_recognition
+# Keep it lean to avoid apt conflicts
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
-    cmake \
     git \
+    cmake \
     python3-dev \
     libopenblas-dev \
     liblapack-dev \
-    libatlas-base-dev \
-    gfortran \
-    libx11-dev \
-    libx11-6 \
-    libsm6 \
-    libxext6 \
-    libxrender-dev \
-    libgtk-3-dev \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
+    && rm -rf /var/lib/apt/lists/*
 
-# Upgrade pip and setuptools to latest versions
+# Upgrade pip and install build tools
 RUN pip install --upgrade pip setuptools wheel
 
 # Copy requirements
 COPY requirements.txt .
 
-# Pre-install numpy separately (helps with dlib compilation)
-RUN pip install --no-cache-dir numpy==1.26.0
+# Pre-compile numpy first (critical for dlib)
+RUN pip install --no-cache-dir --only-binary :all: numpy==1.26.0
 
-# Install Python dependencies
+# Install remaining dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application
